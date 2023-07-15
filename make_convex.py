@@ -24,43 +24,45 @@ if bpy.context.mode != "OBJECT":
 bpy.ops.object.select_all(action='DESELECT')
 
 ## Collect objects that have facemap named "Convex"
-convexObjects = [obj for obj in bpy.data.objects if face_map_name in obj.face_maps]
+convexObjects = [obj for obj in bpy.data.objects if (not obj.name.endswith("[Convex]")) and face_map_name in obj.face_maps]
 
 for obj in convexObjects:
+    
+    new_name = obj.name + "[Convex]"
+    if new_name in bpy.data.objects:
+        new_obj = bpy.data.objects[new_name]
+        bpy.data.objects.remove(new_obj, do_unlink=True)
+        
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
 
-    if face_map_name in obj.face_maps:
+    mesh = obj.data
 
-        bpy.context.view_layer.objects.active = obj
-        obj.select_set(True)
+    face_map_index = obj.face_maps[face_map_name].index
+    face_map = mesh.face_maps[face_map_index] # no name for face map inside mesh
 
-        mesh = obj.data
+    ## MUST BE in Object mode
+    face_map_index = obj.face_maps[face_map_name].index
+    face_map = mesh.face_maps[face_map_index] # no name for face map inside mesh
 
-        face_map_index = obj.face_maps[face_map_name].index
-        face_map = mesh.face_maps[face_map_index] # no name for face map inside mesh
+    for i, fm_data in enumerate(face_map.data):
+        # fm_data.value can be either -1 (unassigned) or the index of the face map it is assigned to
+        selected = fm_data.value == face_map_index
+        f = mesh.polygons[i]
+        f.select = selected # Select the face, maybe we do not need it
 
-        ## MUST BE in Object mode
-        face_map_index = obj.face_maps[face_map_name].index
-        face_map = mesh.face_maps[face_map_index] # no name for face map inside mesh
+    old_selected = [o for o in bpy.context.scene.objects]
 
-        for i, fm_data in enumerate(face_map.data):
-            # fm_data.value can be either -1 (unassigned) or the index of the face map it is assigned to
-            selected = fm_data.value == face_map_index
-            f = mesh.polygons[i]
-            f.select = selected # Select the face, maybe we do not need it
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.duplicate_move(MESH_OT_duplicate={"mode":1})
+    bpy.ops.mesh.separate(type='SELECTED')
 
-        old_selected = [o for o in bpy.context.scene.objects]
+    cur_selected = [o for o in bpy.context.scene.objects]
+    new_obj = [o for o in cur_selected if o not in old_selected][0]
 
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.duplicate_move(MESH_OT_duplicate={"mode":1})
-        bpy.ops.mesh.separate(type='SELECTED')
+    for coll in new_obj.users_collection:
+        coll.objects.unlink(new_obj)
 
-        cur_selected = [o for o in bpy.context.scene.objects]
-        new_obj = [o for o in cur_selected if o not in old_selected][0]
-        print("org=", obj.name, "org=", new_obj.name)
-
-        for coll in new_obj.users_collection:
-            coll.objects.unlink(new_obj)
-
-        new_obj.name = obj.name+"_Convex"
-        convex_collection.objects.link(new_obj)
-        bpy.ops.object.mode_set(mode='OBJECT')
+    new_obj.name = new_name
+    convex_collection.objects.link(new_obj)
+    bpy.ops.object.mode_set(mode='OBJECT')
