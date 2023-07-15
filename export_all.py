@@ -1,3 +1,9 @@
+"""
+    @author: Zaher Dirkey
+    @licesnse: MPL
+    Export all objects that have Face Map = "Convex" as individual files, 
+    The rest of objects exported as one file     
+"""
 import bpy
 import os
 from bl_ui.utils import PresetPanel
@@ -23,6 +29,7 @@ if not os.path.exists(export_folder):
 for object_name in object_names:
     bpy.ops.object.select_all(action='DESELECT')
     obj = bpy.data.objects[object_name]
+    obj.select_set(True)
     export_path = os.path.join(export_folder, obj.name + ".dae")
     bpy.ops.wm.collada_export(filepath=export_path, selected=True, apply_modifiers=True, open_sim=True, use_texture_copies=False)
 
@@ -33,3 +40,5 @@ for object_name in object_names:
 
 export_path = os.path.join(export_folder, os.path.splitext(os.path.basename(bpy.data.filepath))[0] + ".dae")
 bpy.ops.wm.collada_export(filepath=export_path, selected=True, apply_modifiers=True, open_sim=True, use_texture_copies=False)
+
+bpy.ops.object.select_all(action='DESELECT')

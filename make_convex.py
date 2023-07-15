@@ -1,4 +1,6 @@
 """
+    @author: Zaher Dirkey
+    @licesnse: MPL
     Create mesh object of objects that have a Face Map with name `Convex`,
     it copy all faces in Convex face map into another new object, moving it to `Convex` collection
 """
