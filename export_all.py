@@ -14,7 +14,11 @@ from bpy.types import Panel, Menu
                 
 ## Correct names of mesh
 for obj in bpy.data.objects:
-    obj.data.name = obj.name                
+    if obj.data.library is not None:
+        obj.data.name = obj.name                
+#    else:
+#        obj.transform_apply(location=True, rotation=True, scale=True, isolate_users=True)
+
                 
 object_names = [obj.name for obj in bpy.data.objects if "Convex" in obj.face_maps]
                 
@@ -35,7 +39,20 @@ for object_name in object_names:
     obj = bpy.data.objects[object_name]
     obj.select_set(True)
     export_path = os.path.join(export_folder, obj.name + ".dae")
-    bpy.ops.wm.collada_export(filepath=export_path, selected=True, apply_modifiers=True, open_sim=True, use_texture_copies=False)
+    bpy.ops.wm.collada_export(
+        filepath=export_path, 
+        selected=True, 
+        apply_modifiers=True, 
+        open_sim=True, 
+        ## export_object_transformation_type_selection='decomposed', ## ---nop---need it for scale -1 for some linked objects
+        apply_global_orientation=True, ## idk
+        use_texture_copies=True,
+        sort_by_name=False,        
+        export_global_forward_selection='Y',
+        export_global_up_selection='Z',
+        export_mesh_type_selection='view',
+        use_object_instantiation=True        
+    )
 
 bpy.ops.object.select_all(action='SELECT')
 for object_name in object_names:
