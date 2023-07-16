@@ -12,6 +12,10 @@ from bpy.types import Panel, Menu
 # Replace these with the names of the objects you want to export
 #object_names = ["HullConvex", "WheelsConvex", "WheelConvex", "WingsConvex", "Hull", "Wheels", "Wheel", "Wings"]
                 
+## Correct names of mesh
+for obj in bpy.data.objects:
+    obj.data.name = obj.name                
+                
 object_names = [obj.name for obj in bpy.data.objects if "Convex" in obj.face_maps]
                 
 #export_preset_name = "My"
