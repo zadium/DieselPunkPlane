@@ -12,6 +12,7 @@ from bpy.types import Panel, Menu
 
 face_map_name = "Convex"
 collection_convex_name = "Convex"
+name_suffex = "-Convex"
 
 #Create _Convex collection
 if collection_convex_name in bpy.data.collections:
@@ -26,11 +27,11 @@ if bpy.context.mode != "OBJECT":
 bpy.ops.object.select_all(action='DESELECT')
 
 ## Collect objects that have facemap named "Convex"
-convexObjects = [obj for obj in bpy.data.objects if (not obj.name.endswith("[Convex]")) and face_map_name in obj.face_maps]
+convexObjects = [obj for obj in bpy.data.objects if (not obj.name.endswith(name_suffex)) and face_map_name in obj.face_maps]
 
 for obj in convexObjects:
     
-    new_name = obj.name + "[Convex]"
+    new_name = obj.name + name_suffex
     if new_name in bpy.data.objects:
         new_obj = bpy.data.objects[new_name]
         bpy.data.objects.remove(new_obj, do_unlink=True)
@@ -66,5 +67,6 @@ for obj in convexObjects:
         coll.objects.unlink(new_obj)
 
     new_obj.name = new_name
+    new_obj.data.name = new_obj.name
     convex_collection.objects.link(new_obj)
     bpy.ops.object.mode_set(mode='OBJECT')
