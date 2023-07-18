@@ -44,10 +44,14 @@ def export_all_opensim(rename_mesh=True, individual=False):
             selected=True, 
             apply_modifiers=True, 
             open_sim=True, 
+            keep_bind_info=True,
+            include_children=True,
             # export_object_transformation_type_selection='decomposed', ## ---nop---need it for scale -1 for some linked objects
             # apply_global_orientation=True, ## idk
             use_texture_copies=True,
-            sort_by_name=False,        
+            use_texture_copies=True,
+            #export_texture_type='COPY',
+            sort_by_name=True,        
             export_global_forward_selection='Y',
             export_global_up_selection='Z',
             export_mesh_type_selection='view',
