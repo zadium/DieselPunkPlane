@@ -7,20 +7,20 @@
     @license: MPL
 
     @version: 1.0
-    @updated: "2023-08-03 23:13:33"
-    @revision: 259
+    @updated: "2023-08-06 18:58:51"
+    @revision: 313
     @localfile: ?defaultpath\DieselPunkPlane\?@name.lsl
 */
 
 float PowerFactor = 10; //* multiply with Velocity
 
 float Tilting = 20; //DEG
-float ForwardTilting = 40; //DEG
+float ForwardTilting = 10; //DEG
 //integer DirectY = TRUE; //* Go forward to Y
-float RotatingThrust = 40;
-float ForwardThrust = 10;
-float MaxForwardThrust = 50;
-float UpThrust = 30;
+float RotatingThrust = 10;
+float ForwardThrust = 1;
+float MaxForwardThrust = 5;
+float UpThrust = 3;
 
 vector textPos = < 0, 0, 0.1 >;
 float Interval=0.5;
@@ -121,10 +121,10 @@ setupEngine()
     //llSetVehicleRotationParam(VEHICLE_REFERENCE_FRAME, refRot);
     llSetVehicleRotationParam(VEHICLE_REFERENCE_FRAME, ZERO_ROTATION);
     llSetVehicleVectorParam(VEHICLE_LINEAR_MOTOR_OFFSET, <0, 0, 0>); //* engine in front
-    llSetVehicleVectorParam( VEHICLE_LINEAR_FRICTION_TIMESCALE, <200, 20, 5000> );
+    llSetVehicleVectorParam( VEHICLE_LINEAR_FRICTION_TIMESCALE, <60, 20, 20> );
 
     llSetVehicleFloatParam( VEHICLE_LINEAR_MOTOR_TIMESCALE, 2 );
-    llSetVehicleFloatParam( VEHICLE_LINEAR_MOTOR_DECAY_TIMESCALE, 20 );
+    llSetVehicleFloatParam( VEHICLE_LINEAR_MOTOR_DECAY_TIMESCALE, 10);
     llSetVehicleFloatParam( VEHICLE_LINEAR_DEFLECTION_EFFICIENCY, 0 );
     llSetVehicleFloatParam( VEHICLE_LINEAR_DEFLECTION_TIMESCALE, 5 );
 
@@ -171,11 +171,11 @@ prepare()
 
 start()
 {
-    llOwnerSay("start");
     started = TRUE;
     setupEngine();
     llSetTimerEvent(Interval);
     llSetStatus(STATUS_PHYSICS, TRUE);
+    llOwnerSay("started");
 }
 
 unprepare()
@@ -186,12 +186,12 @@ unprepare()
 
 stop()
 {
-    llOwnerSay("stop");
     started = FALSE;
     llSetVehicleVectorParam(VEHICLE_ANGULAR_MOTOR_DIRECTION, ZERO_VECTOR);
     llSetVehicleVectorParam(VEHICLE_LINEAR_MOTOR_DIRECTION, ZERO_VECTOR);
     llSetStatus(STATUS_PHYSICS, FALSE);
     llSetTimerEvent(0);
+    llOwnerSay("stopped");
 }
 
 //* enject all sitters that not pilot
@@ -237,14 +237,12 @@ integer checkSeat()
     {
         pilot = agent;
         llMessageLinked(LINK_SET, 0, "sit", pilot);
-        llOwnerSay("Welcome");
         prepare();
         return TRUE;
     }
     else if((agent == NULL_KEY) && (pilot != NULL_KEY))
     {
         llMessageLinked(LINK_SET, 0, "unsit", pilot);
-        llOwnerSay("Bye");
         unprepare();
         pilot = NULL_KEY;
         stop();
@@ -255,7 +253,7 @@ integer checkSeat()
 }
 
 float factor=1;
-float linear_x = 0;
+vector linear;
 
 vector oldPos; //* for testing only to return back to original pos
 rotation oldRot;
@@ -263,7 +261,7 @@ rotation oldRot;
 respawn()
 {
     factor = PowerFactor * Interval;
-    linear_x = 0;
+    linear = <0, 0, 0>;
     llSetSoundQueueing(FALSE);
     llStopSound();
     llMessageLinked(LINK_SET, 0, "stop", NULL_KEY);
@@ -288,7 +286,7 @@ init()
     llSetForce(ZERO_VECTOR, TRUE);
     llSitTarget(ZERO_VECTOR, ZERO_ROTATION); //* do not sit on hull/root
     factor = PowerFactor * Interval;
-    linear_x = 0;
+    linear = <0, 0, 0>;
 }
 
 default
@@ -342,16 +340,15 @@ default
                 start();
             else
             {
-                vector angular = <0.0, 0.0, 0.0>;
-                float linear_z = 0;
+                vector delta = <0, 0, 0>;
 
                 if ((level & KEY_PageUp) || (level & KEY_PageDown))
                 {
                     if ((edge & KEY_PageUp) && (edge & KEY_PageDown))
                     {
-                        linear_x = 0;
+                        delta.x = -linear.x;
                     }
-                    else if (level & KEY_PageUp)
+                    else if (edge & KEY_PageUp)
                     {
                         if (!started)
                         {
@@ -359,58 +356,61 @@ default
                             return;
                         }
                         else
-                            linear_x += ForwardThrust;
+                            delta.x = ForwardThrust;
                     }
-                    else if (level & KEY_PageDown)
-                        linear_x -= ForwardThrust;
-
-                    if (linear_x>MaxForwardThrust)
-                        linear_x = MaxForwardThrust;
-                    else if (linear_x<0)
-                        linear_x = 0;
-
-                    if (level & KEY_Up)
-                        angular.y = -ForwardTilting * DEG_TO_RAD;
-                    else
-                        angular.y = ForwardTilting * DEG_TO_RAD;
-
+                    else if (edge & KEY_PageDown)
+                        delta.x -= ForwardThrust;
                 }
                 else
                 {
                     //llOwnerSay("---");
                     //linear_x = 0;
                 }
-
+                /*
                 if ((level & KEY_Up) || (level & KEY_Down))
                 {
                     if (level & KEY_Up)
                     {
-                        linear_z = UpThrust;
-                        angular.y = -ForwardTilting * DEG_TO_RAD;
+                        delta.z = UpThrust;
+                        //angular.y = -ForwardTilting * DEG_TO_RAD;
                     }
                     else if (level & KEY_Down)
                     {
-                        linear_z = -UpThrust;
-                        angular.y = ForwardTilting * DEG_TO_RAD;
+                        delta.z = -UpThrust;
+                        //angular.y = ForwardTilting * DEG_TO_RAD;
                     }
                 }
                 else
                 {
-                    linear_z = 0;
+                    delta.z = 0;
+                }  */
+
+                if ((delta.x > 0) || (delta.z>0))
+                {
+                    linear = linear + delta;
+                    if (linear.x>MaxForwardThrust)
+                        linear.x = MaxForwardThrust;
+                    else if (linear.x<0)
+                        linear.x = 0;
+                    linear.z = linear.x;
+
+                    llOwnerSay((string)linear);
+                    llSetVehicleVectorParam(VEHICLE_LINEAR_MOTOR_DIRECTION, linear * factor);
                 }
 
-                llSetVehicleVectorParam(VEHICLE_LINEAR_MOTOR_DIRECTION, <linear_x, 0, linear_z>);
 
+                vector angular = <0.0, 0.0, 0.0>;
         //        if (linear_x>0)
         //            angular.y = ForwardTilting * DEG_TO_RAD;
 
                 if (level & KEY_Right) {
-                    angular.x = Tilting*DEG_TO_RAD;
-                    angular.z = -RotatingThrust * DEG_TO_RAD;
+//                    angular.x = Tilting*DEG_TO_RAD;
+                    angular.z = -linear.x * DEG_TO_RAD;
                 }
+
                 if (level & KEY_Left) {
-                    angular.x = -Tilting*DEG_TO_RAD;
-                    angular.z = RotatingThrust * DEG_TO_RAD;
+//                    angular.x = -Tilting*DEG_TO_RAD;
+                    angular.z = linear.x * DEG_TO_RAD;
                 }
 
                 if (level & KEY_ShiftRight) {
@@ -423,7 +423,7 @@ default
                     //angular.z = RotatingThrust * DEG_TO_RAD;
                 }
 
-                llSetVehicleVectorParam(VEHICLE_ANGULAR_MOTOR_DIRECTION, angular);
+                llSetVehicleVectorParam(VEHICLE_ANGULAR_MOTOR_DIRECTION, angular * factor);
             }
         }
     }
