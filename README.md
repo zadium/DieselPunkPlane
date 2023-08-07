@@ -6,3 +6,8 @@ https://sketchfab.com/3d-models/diesel-punk-plane-2f94582de15240d8b6a0ef3cc195f0
 
 Keep Credits for "Ryan Butler" and "Zai Dium" in Note Card inside the object
 
+FRICTION
+DECAY
+DEFLECTION
+ATTRACTION
+BANKING
